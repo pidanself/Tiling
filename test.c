@@ -35,6 +35,7 @@ int main(){
     if(retval!=1){
         return -1;
     }
+    //
 
     retval=fz_plasma_psge2desc(m,n,lda,&B,pA);
     int retval=fz_hw_ge2desc(m,n,lda,&A,pA);
