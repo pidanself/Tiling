@@ -38,45 +38,24 @@ extern "C" {
  *
  **/
 typedef struct {
-    // pointer and offsets
-    void *matrix; ///< pointer to the beginning of the matrix 改成p_data
+    void *p_data; ///< pointer to the beginning of the matrix matrix
+    char matrix_shape;      ///< general, general band, etc.   type
+    char uper_lower;      ///< upper, lower, etc.  uplo
+    char data_type; ///< precision of the matrix precision
 
-    //改成short\char
-    hw_enum_t type;      ///< general, general band, etc. =general  改成matrix_shape
-    hw_enum_t uplo;      ///< upper, lower, etc. = 改成uper_lower
-    hw_enum_t precision; ///< precision of the matrix =hwRealFloat 改成data_type
-
-
-    //改成位置的英文的变量名
-    size_t A21;   ///< pointer to the beginning of A21 =
-    size_t A12;   ///< pointer to the beginning of A12
-    size_t A22;   ///< pointer to the beginning of A22
+    size_t lower_left;   ///< pointer to the beginning of A21 
+    size_t upper_right;   ///< pointer to the beginning of A12
+    size_t lower_right;   ///< pointer to the beginning of A22
 
     // tile parameters
-    int mb; ///< number of rows in a tile =自己定一个 改成rows_per_chunk
-    int nb; ///< number of columns in a tile =自己定一个
+    int rows_per_chunk; ///< number of rows in a tile mb
+    int cols_per_chunk; ///< number of columns in a tile nb
 
-    //让lm=mb ln=nb试试
     // main matrix parameters
-    int gm;  ///< number of rows of the entire matrix =自己定一个 total_rows
-    int gn;  ///< number of columns of the entire matrix =自己定一个
-    int gmt; ///< number of tile rows of the entire matrix  total_chunk_rows
-    int gnt; ///< number of tile columns of the entire matrix
-
-    // submatrix parameters
-    int i;  ///< row index to the beginning of the submatrix
-    int j;  ///< column index to the beginning of the submatrix
-    int m;  ///< number of rows of the submatrix
-    int n;  ///< number of columns of the submatrix
-    int mt; ///< number of tile rows of the submatrix
-    int nt; ///< number of tile columns of the submatrix
-
-    // submatrix parameters for a band matrix
-    int kl;  ///< number of rows below the diagonal
-    int ku;  ///< number of rows above the diagonal
-    int klt; ///< number of tile rows below the diagonal tile
-    int kut; ///< number of tile rows above the diagonal tile
-             ///  includes the space for potential fills, i.e., kl+ku
+    int total_rows;  ///< number of rows of the entire matrix gm 
+    int total_cols;  ///< number of columns of the entire matrix gn
+    int total_chunk_rows; ///< number of tile rows of the entire matrix  gmt
+    int total_chunk_cols; ///< number of tile columns of the entire matrix gnt
 } hw_desc_t;//用到
 
 /******************************************************************************/
