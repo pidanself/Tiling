@@ -29,6 +29,8 @@
         "hw.h": "c",
         "hw_async.h": "c",
         "hw_barrier.h": "c",
-        "hw_context.h": "c"
-    }
+        "hw_context.h": "c",
+        "ios": "c"
+    },
+    "C_Cpp.errorSquiggles": "Enabled"
 }

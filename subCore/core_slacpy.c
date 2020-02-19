@@ -50,7 +50,7 @@
  *
  * @param[out] B
  *          The m-by-n copy of the matrix A.
- *          On exit, B = A ONLY in the locations specified by uplo.
+ *          On exit, B = A ONLY in the locations specified by uper_lower.
  *
  * @param[in] ldb
  *          The leading dimension of the array B.
@@ -58,20 +58,20 @@
  *
  ******************************************************************************/
 __attribute__((weak))
-void hw_core_slacpy(hw_enum_t uplo, hw_enum_t transa,
+void hw_core_slacpy(char uper_lower, char transa,
                  int m, int n,
                  const float *A, int lda,
                        float *B, int ldb)
 {
     if (transa == hwNoTrans) {
         LAPACKE_slacpy_work(LAPACK_COL_MAJOR,
-                            lapack_const(uplo),
+                            lapack_const(uper_lower),
                             m, n,
                             A, lda,
                             B, ldb);
     }
     else if (transa == hwTrans) {
-        switch (uplo) {
+        switch (uper_lower) {
         case hwUpper:
             for (int i = 0; i < imin(m, n); i++)
                 for (int j = i; j < n; j++)
@@ -90,7 +90,7 @@ void hw_core_slacpy(hw_enum_t uplo, hw_enum_t transa,
         }
     }
     else {
-        switch (uplo) {
+        switch (uper_lower) {
         case hwUpper:
             for (int i = 0; i < imin(m, n); i++)
                 for (int j = i; j < n; j++)
@@ -111,7 +111,7 @@ void hw_core_slacpy(hw_enum_t uplo, hw_enum_t transa,
 }
 
 /******************************************************************************/
-void hw_core_omp_slacpy(hw_enum_t uplo, hw_enum_t transa,
+void hw_core_omp_slacpy(char uper_lower, char transa,
                      int m, int n,
                      const float *A, int lda,
                            float *B, int ldb,
@@ -122,7 +122,7 @@ void hw_core_omp_slacpy(hw_enum_t uplo, hw_enum_t transa,
     //                  depend(out:B[0:ldb*n])
     {
         if (sequence->status == hwSuccess)
-            hw_core_slacpy(uplo, transa,
+            hw_core_slacpy(uper_lower, transa,
                         m, n,
                         A, lda,
                         B, ldb);

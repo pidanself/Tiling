@@ -3,8 +3,8 @@
 #include "../include/hw_context.h"
 
 
-int hw_desc_general_create(hw_enum_t precision, int mb, int nb,
-                               int lm, int ln, int i, int j, int m, int n,
+int hw_desc_general_create(char data_type, int rows_per_chunk, int cols_per_chunk,
+                               int lm, int ln,
                                hw_desc_t *A)
 {
     hw_context_t *hw = hw_context_self();
@@ -13,8 +13,8 @@ int hw_desc_general_create(hw_enum_t precision, int mb, int nb,
         return hwErrorNotInitialized;
     }
     // Initialize the descriptor.
-    int retval = hw_desc_general_init(precision, NULL, mb, nb,
-                                          lm, ln, i, j, m, n, A);
+    int retval = hw_desc_general_init(data_type, NULL, rows_per_chunk, cols_per_chunk,
+                                          lm, ln, A);
     if (retval != hwSuccess) {
         hw_error("hw_desc_general_init() failed");
         return retval;
@@ -26,108 +26,77 @@ int hw_desc_general_create(hw_enum_t precision, int mb, int nb,
         return hwErrorIllegalValue;
     }
     // Allocate the matrix.
-    size_t size = (size_t)A->gm*A->gn*
-                  hw_element_size(A->precision);
-    A->matrix = malloc(size);
-    if (A->matrix == NULL) {
+    size_t size = (size_t)A->total_rows*A->total_cols*
+                  hw_element_size(A->data_type);
+    A->p_data = malloc(size);
+    if (A->p_data == NULL) {
         hw_error("malloc() failed");
         return hwErrorOutOfMemory;
     }
     return hwSuccess;
 }
 
-int hw_desc_general_init(hw_enum_t precision, void *matrix,
-                             int mb, int nb, int lm, int ln, int i, int j,
-                             int m, int n, hw_desc_t *A)
+int hw_desc_general_init(char data_type, void *matrix,
+                             int rows_per_chunk, int cols_per_chunk, int lm, int ln, hw_desc_t *A)
 {
-    // type and precision
-    A->type = hwGeneral;
-    A->precision = precision;
+    // matrix_shape and data_type
+    A->matrix_shape = hwGeneral;
+    A->data_type = data_type;
 
     // pointer and offsets
-    A->matrix = matrix;
-    A->A21 = (size_t)(lm - lm%mb) * (ln - ln%nb);
-    A->A12 = (size_t)(     lm%mb) * (ln - ln%nb) + A->A21;
-    A->A22 = (size_t)(lm - lm%mb) * (     ln%nb) + A->A12;
+    A->p_data = matrix;
+    A->lower_left = (size_t)(lm - lm%rows_per_chunk) * (ln - ln%cols_per_chunk);
+    A->upper_right = (size_t)(     lm%rows_per_chunk) * (ln - ln%cols_per_chunk) + A->lower_left;
+    A->lower_right = (size_t)(lm - lm%rows_per_chunk) * (     ln%cols_per_chunk) + A->upper_right;
 
     // tile parameters
-    A->mb = mb;
-    A->nb = nb;
+    A->rows_per_chunk = rows_per_chunk;
+    A->cols_per_chunk = cols_per_chunk;
 
     // main matrix parameters
-    A->gm = lm;
-    A->gn = ln;
+    A->total_rows = lm;
+    A->total_cols = ln;
 
-    A->gmt = (lm%mb == 0) ? (lm/mb) : (lm/mb+1);
-    A->gnt = (ln%nb == 0) ? (ln/nb) : (ln/nb+1);
+    A->total_chunk_rows = (lm%rows_per_chunk == 0) ? (lm/rows_per_chunk) : (lm/rows_per_chunk+1);
+    A->total_chunk_cols = (ln%cols_per_chunk == 0) ? (ln/cols_per_chunk) : (ln/cols_per_chunk+1);
 
-    // submatrix parameters
-    A->i = i;
-    A->j = j;
-    A->m = m;
-    A->n = n;
+    A->m = lm;
+    A->n = ln;
 
-    A->mt = (m == 0) ? 0 : (i+m-1)/mb - i/mb + 1;
-    A->nt = (n == 0) ? 0 : (j+n-1)/nb - j/nb + 1;
-
-    // band parameters
-    A->kl = m-1;
-    A->ku = n-1;
-    A->klt = A->mt;
-    A->kut = A->nt;
+    A->mt = A->total_chunk_rows;
+    A->nt = A->total_chunk_cols;
 
     return hwSuccess;
 }
 
 int hw_desc_check(hw_desc_t A)
 {
-    if (A.type == hwGeneral ||
-        A.type == hwUpper ||
-        A.type == hwLower) {
+    if (A.matrix_shape == hwGeneral ||
+        A.matrix_shape == hwUpper ||
+        A.matrix_shape == hwLower) {
         return hw_desc_general_check(A);
     }
-    else if (A.type == hwGeneralBand) {
+    else if (A.matrix_shape == hwGeneralBand) {
         //暂时不涉及
         //return hw_desc_general_band_check(A);
     }
     else {
-        hw_error("invalid matrix type");
+        hw_error("invalid data matrix_shape");
         return hwErrorIllegalValue;
     }
 }
 
 int hw_desc_general_check(hw_desc_t A)
 {
-    if (A.precision != hwRealFloat &&
-        A.precision != hwRealDouble &&
-        A.precision != hwComplexFloat &&
-        A.precision != hwComplexDouble  ) {
-        hw_error("invalid matrix type");
+    if (A.data_type != hwRealFloat &&
+        A.data_type != hwRealDouble &&
+        A.data_type != hwComplexFloat &&
+        A.data_type != hwComplexDouble  ) {
+        hw_error("invalid data matrix_shape");
         return hwErrorIllegalValue;
     }
-    if (A.mb <= 0 || A.nb <= 0) {
+    if (A.rows_per_chunk <= 0 || A.cols_per_chunk <= 0) {
         hw_error("negative tile dimension");
-        return hwErrorIllegalValue;
-    }
-    if ((A.m < 0) || (A.n < 0)) {
-        hw_error("negative matrix dimension");
-        return hwErrorIllegalValue;
-    }
-    if ((A.gm < A.m) || (A.gn < A.n)) {
-        hw_error("invalid leading dimensions");
-        return hwErrorIllegalValue;
-    }
-    if ((A.i > 0 && A.i >= A.gm) ||
-        (A.j > 0 && A.j >= A.gn)) {
-        hw_error("beginning of the matrix out of bounds");
-        return hwErrorIllegalValue;
-    }
-    if (A.i+A.m > A.gm || A.j+A.n > A.gn) {
-        hw_error("submatrix out of bounds");
-        return hwErrorIllegalValue;
-    }
-    if ((A.i % A.mb != 0) || (A.j % A.nb != 0)) {
-        hw_error("submatrix not aligned to a tile");
         return hwErrorIllegalValue;
     }
     return hwSuccess;

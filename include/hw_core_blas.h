@@ -11,6 +11,7 @@
 #define hw_CORE_BLAS_H
 
 #include <stdio.h>
+#include "hw_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,12 +89,22 @@ static const char *lapack_constants[] = {
     "Rowwise"                              ///< 402: hwRowwise
 };
 
+
+
 /***************************************************************************//**
  * @retval LAPACK character constant corresponding to hw constant
  * @ingroup hw_const
  ******************************************************************************/
-static inline char lapack_const(int hw_const) {
-    return lapack_constants[hw_const][0];
+static inline char lapack_const(char hw_const) {
+    if(hw_const==hwUpper){
+        return lapack_constants[121][0];
+    }
+    else if(hw_const==hwLower){
+        return lapack_constants[122][0];
+    }
+    else{
+        return lapack_constants[123][0];
+    }
 }
 
 #define hw_coreblas_error(msg) \

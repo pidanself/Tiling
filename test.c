@@ -31,14 +31,14 @@ int main(){
     float *pA=(float *)malloc(sizeof(float)*((n)*(lda)+2));
     matGene(pA,lda,m,n);
     //使用封装hw函数
-    retval=fz_hw_ge2desc(m,n,lda,&A,pA);
+    int retval=fz_hw_ge2desc(m,n,lda,&A,pA);
     if(retval!=1){
         return -1;
     }
     //
 
     retval=fz_plasma_psge2desc(m,n,lda,&B,pA);
-    int retval=fz_hw_ge2desc(m,n,lda,&A,pA);
+    retval=fz_hw_ge2desc(m,n,lda,&A,pA);
     if(retval!=1){
         return -1;
     }
@@ -56,8 +56,8 @@ int main(){
 
 
 void printDescH(hw_desc_t a){
-    printf("'type:'%d;'uplo':%d;'precision':%d\nmb:%d;nb:%d;\ngm:%d;gn:%d;gmt:%d;gnt:%d\ni:%d;j:%d;m:%d;n:%d;mt:%d;nt:%d\nkl:%d;ku:%d;klt:%d;kut:%d\n",a.type,a.uplo,a.precision,a.mb,a.nb,a.gm,a.gn,a.gmt,a.gnt,a.i,a.j,a.m,a.n,a.mt,a.nt,a.kl,a.ku,a.klt,a.kut);
-    printf("%f\n",((float*)a.matrix)[0]);
+    printf("'matrix_shape:'%c;'uper_lower':%c;'data_type':%c\nrows_per_chunk:%d;cols_per_chunk:%d;\ntotal_rows:%d;total_cols:%d;total_chunk_rows:%d;total_chunk_cols:%d\n",a.matrix_shape,a.uper_lower,a.data_type,a.rows_per_chunk,a.cols_per_chunk,a.total_rows,a.total_cols,a.total_chunk_rows,a.total_chunk_cols);
+    printf("%f\n",((float*)a.p_data)[0]);
 }
 
 void printDescP(plasma_desc_t a){
@@ -66,15 +66,11 @@ void printDescP(plasma_desc_t a){
 }
 
 int compareDesc(hw_desc_t a,plasma_desc_t b){
-    if(a.type==b.type&&a.precision==b.precision
-    &&a.mb==b.mb&&a.nb==b.nb
-    &&a.gm==b.gm&&a.gn==b.gn&&a.gmt==b.gmt&&a.gnt==b.gnt
-    &&a.i==b.i&&a.j==b.j&&a.m==b.m&&a.n==b.n&&a.mt==b.mt&&a.nt==b.nt
-    &&a.kl==b.kl&&a.ku==b.ku&&a.klt==b.klt&&a.kut==b.kut){
-        printf("参数比较正常\n");
+    if(a.rows_per_chunk==b.mb&&a.cols_per_chunk==b.nb
+    &&a.total_rows==b.gm&&a.total_cols==b.gn&&a.total_chunk_rows==b.gmt&&a.total_chunk_cols==b.gnt){
         //比较matrix中的每一个值
-        int sizeDesc=a.gm*a.gn;
-        float *am=(float*)a.matrix;
+        int sizeDesc=a.total_rows*a.total_cols;
+        float *am=(float*)a.p_data;
         float *bm=(float*)b.matrix;
         for(int i=0;i<sizeDesc;i++){
             if(am[i]!=bm[i]){
@@ -119,7 +115,7 @@ int fz_hw_ge2desc(int m,int n,int lda,hw_desc_t *A,float *pA){
     int nb = hw->nb;
     int retval;
     retval = hw_desc_general_create(hwRealFloat, nb, nb,
-                                        m, n, 0, 0, m, n, A);
+                                        m, n,A);
     //printDesc(A);
     if (retval != hwSuccess) {
         hw_error("hw_desc_general_create() failed\n");

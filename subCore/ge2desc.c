@@ -21,20 +21,20 @@ void hw_ge2desc(float *pA, int lda,
     int n, m, ldt;
 
     for (m = 0; m < A.mt; m++) {
-        ldt = hw_tile_mmain(A, m);
+        ldt = hw_tile_mmain(A, m,0);
         for (n = 0; n < A.nt; n++) {
-            x1 = n == 0 ? A.j%A.nb : 0;
-            y1 = m == 0 ? A.i%A.mb : 0;
-            x2 = n == A.nt-1 ? (A.j+A.n-1)%A.nb+1 : A.nb;
-            y2 = m == A.mt-1 ? (A.i+A.m-1)%A.mb+1 : A.mb;
+            x1 = 0;
+            y1 = 0;
+            x2 = n == A.nt-1 ? (A.n-1)%A.cols_per_chunk+1 : A.cols_per_chunk;
+            y2 = m == A.mt-1 ? (A.m-1)%A.rows_per_chunk+1 : A.rows_per_chunk;
 
-            f77 = &pA[(size_t)A.nb*lda*n + (size_t)A.mb*m];
-            bdl = (float*)hw_tile_addr(A, m, n);
+            f77 = &pA[(size_t)A.cols_per_chunk*lda*n + (size_t)A.rows_per_chunk*m];
+            bdl = (float*)hw_tile_addr(A, m, n,0,0);
 
             hw_core_omp_slacpy(hwGeneral, hwNoTrans,
                             y2-y1, x2-x1,
                             &(f77[x1*lda+y1]), lda,
-                            &(bdl[x1*A.nb+y1]), ldt,
+                            &(bdl[x1*A.cols_per_chunk+y1]), ldt,
                             sequence, request);
         }
     }

@@ -26,14 +26,14 @@ extern "C" {
 float fabsf(float alpha);
 #endif
 
-void hw_core_omp_slacpy(hw_enum_t uplo, hw_enum_t transa,
+void hw_core_omp_slacpy(char uper_lower, char transa,
                      int m, int n,
                      const float *A, int lda,
                            float *B, int ldb,
                      hw_sequence_t *sequence, hw_request_t *request);
 
 
-void hw_core_slacpy(hw_enum_t uplo, hw_enum_t transa,
+void hw_core_slacpy(char uper_lower, char transa,
                  int m, int n,
                  const float *A, int lda,
                        float *B, int ldb);

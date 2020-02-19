@@ -51,6 +51,4 @@
 #define lapack_int int
 #endif
 
-#include "core_lapack_s.h"
-
 #endif // hw_CORE_LAPACK_H

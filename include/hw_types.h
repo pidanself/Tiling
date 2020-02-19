@@ -46,12 +46,12 @@ extern "C" {
 
 /******************************************************************************/
 enum {
-    hwByte          = 0,
-    hwInteger       = 1,
-    hwRealFloat     = 2,
-    hwRealDouble    = 3,
-    hwComplexFloat  = 4,
-    hwComplexDouble = 5
+    hwByte          = '0',
+    hwInteger       = '1',
+    hwRealFloat     = '2',
+    hwRealDouble    = '3',
+    hwComplexFloat  = '4',
+    hwComplexDouble = '5'
 };
 
 /***************************************************************************//**
@@ -69,15 +69,15 @@ enum {
 enum {
     hwInvalid       = -1,
 
-    hwNoTrans       = 111,
-    hwTrans         = 112,
-    hwConjTrans     = 113,
+    hwNoTrans       = '4',
+    hwTrans         = '5',
+    hwConjTrans     = '6',
     hw_ConjTrans    = hwConjTrans,
 
-    hwUpper         = 121,
-    hwLower         = 122,
-    hwGeneral       = 123,
-    hwGeneralBand   = 124,
+    hwUpper         = '0', //121
+    hwLower         = '1',
+    hwGeneral       = '2',
+    hwGeneralBand   = '3', //124
 
     hwNonUnit       = 131,
     hwUnit          = 132,
